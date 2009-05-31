@@ -11,6 +11,8 @@ chans_opcode_t chans_4bit_opcode_list[] =
 	{CO_POP_AND_BRANCH, 2, ARG_JMP2, L"IF(!POP) PC = PC + 0x%04hx [dst: 0x%08x]"},
 	{CO_POP_AND_BRANCH2, 2, ARG_JMP1, L"IF(!POP) PC = PC + 0x%04hx + 1 [dst: 0x%08x]"},
 	{CO_GOTO, 2, ARG_JMP2, L"PC = PC + %04hx [dst: 0x%08x]"},
+	{CO_Cx, 2, ARG_TEMP12, L"UNKNOWN EFFECT [Cx] ARG1=%03hx"},
+	{CO_8x, 2, ARG_TEMP12, L"UNKNOWN EFFECT [8x] ARG1=%03hx"},
 };
 
 chans_opcode_t chans_8bit_opcode_list[] =
@@ -19,6 +21,7 @@ chans_opcode_t chans_8bit_opcode_list[] =
 	{CO_RETURN, 1, ARG_NONE, L"RETURN ACC"},
 	{CO_NEW, 2, ARG_U8, L"NEW [0x%02hhx args]"},
 	{CO_PUSH_ACC, 1, ARG_NONE, L"PUSH ACC"},
+	{CO_05, 1, ARG_NONE, L"UNKNOWN EFFECT [05]"},
 	{CO_ADD, 1, ARG_NONE, L"ACC = POP + ACC"},
 	{CO_SUB, 1, ARG_NONE, L"ACC = POP - ACC"},
 	{CO_MUL, 1, ARG_NONE, L"ACC = POP * ACC"},
@@ -33,6 +36,8 @@ chans_opcode_t chans_8bit_opcode_list[] =
 	{CO_NEQ, 1, ARG_NONE, L"ACC = (POP != ACC)"},
 	{CO_LT, 1, ARG_NONE, L"ACC = (POP < ACC)"},
 	{CO_GT, 1, ARG_NONE, L"ACC = (POP > ACC)"},
+	{CO_LTE, 1, ARG_NONE, L"ACC = (POP <= ACC) [NEEDS CONFIRMATION]"},
+	{CO_GTE, 1, ARG_NONE, L"ACC = (POP >= ACC) [NEEDS CONFIRMATION]"},
 	{CO_NOT, 1, ARG_NONE, L"ACC = !ACC"},
 	{CO_LOAD_S8, 2, ARG_U8, L"ACC = 0x%02hhx"},
 	{CO_ADD_IMM, 2, ARG_U8, L"ACC = ACC + 0x%02hhx"},

@@ -24,6 +24,7 @@
 #define CO_NEW      0x02
 
 #define CO_PUSH_ACC 0x04
+#define CO_05 0x05
 
 #define CO_ADD      0x06
 #define CO_SUB      0x07
@@ -40,6 +41,8 @@
 #define CO_NEQ      0x11
 #define CO_LT       0x12
 #define CO_GT       0x13
+#define CO_LTE      0x14
+#define CO_GTE      0x15
 
 #define CO_NOT      0x17
 #define CO_LOAD_S8  0x18
@@ -78,7 +81,9 @@
 #define CO_GET_TEMP         0x50
 #define CO_SET_LOCAL_SYMBOL 0x60
 #define CO_SET_TEMP         0x70
+#define CO_8x               0x80
 #define CO_POP_AND_BRANCH   0xa0
+#define CO_Cx  0xc0
 #define CO_POP_AND_BRANCH2  0xd0
 #define CO_GOTO             0xe0
 
