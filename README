@@ -1,0 +1,7 @@
+To build:
+
+run:
+
+1) ./bootstrap.sh
+2) ./configure
+3) make
