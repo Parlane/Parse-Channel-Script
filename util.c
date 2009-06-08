@@ -26,9 +26,10 @@ u64 be64(u64 x)
         (x<<56);
 }
 
-f64 bef64(f64 x)
-{
-	u64 hax = be64(*(u64*)&x);
 
-	return *(f64*)&hax;
+f64 bef64(f64 x){
+	union  {u64 a; f64 b;} hax;
+	hax.b = x;
+	hax.a = be64(hax.a);
+	return hax.b;
 }
