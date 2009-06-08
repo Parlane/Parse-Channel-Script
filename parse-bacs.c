@@ -3,11 +3,13 @@
 **	Author: Matthew Parlane
 **	Email: matthew_parlane@ hot mail [dot] (com)
 */
+#define _GNU_SOURCE
 #include <iconv.h>
 #include <errno.h>
 
 #include <stdlib.h>
 #include <stdint.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <wchar.h>
@@ -26,6 +28,364 @@ char ** exportedMethods = NULL;
 char ** importedMethods = NULL;
 wchar_t ** stringLiterals = NULL;
 
+
+/* BEGIN: Matthews temporary placement of structure defines */
+
+
+	typedef struct stack_node stack_node;
+	struct stack_node
+	{
+		char * string;
+		stack_node * next;
+	};
+	
+	stack_node * rootStack = NULL;
+	char * ACC = NULL;
+	
+	void pushStack(char * string){
+		stack_node * newNode = calloc(1,sizeof(stack_node));
+		asprintf(&newNode->string, "%s", string);
+		if (rootStack){
+			newNode->next = rootStack;	
+		}
+		rootStack = newNode;
+	}
+	char * popStack(){
+		if(!rootStack) return NULL;
+		stack_node * temp = rootStack->next;
+		char * ret = rootStack->string;
+		free(rootStack);
+		rootStack = temp;
+		return ret;
+	}
+	void freeACC(int print){
+		if(ACC){
+			if(print) wprintf(L"%s;\n", ACC);
+			free(ACC);
+		}
+		ACC = NULL;
+	}
+
+	char * freeGetACC(int print){
+		char * ret = NULL;
+		asprintf(&ret,"%s", ACC);
+		if(ACC){
+			if(print) wprintf(L"%s;\n", ACC);
+			free(ACC);
+		}
+		ACC = NULL;
+		return ret;
+	}
+
+/* END: Matthews temporary placement of structure defines */
+
+char * getFunctionCall(int numOfArgs){
+	int i = 0;
+	char * temp = NULL;
+	char * tempPop = NULL;
+	char * functionCall = NULL;
+	for(i=0; i<numOfArgs; i++){
+		if(i){
+			tempPop = popStack();
+			asprintf(&temp, "%s, %s", tempPop, functionCall);
+			free(functionCall);
+			free(tempPop);
+			functionCall = temp;
+		}else{
+			tempPop = popStack();
+			asprintf(&functionCall, "%s", tempPop);
+			free(tempPop);
+		}
+	}
+	if(!numOfArgs) asprintf(&functionCall, "");
+	return functionCall;
+}
+
+void parseByteCodeToCode(u8 * data, int length){
+	int i = 0, j = 0, argcount = 0;
+	char * funcname = NULL;
+	char * args = NULL;
+	char * temp = NULL;
+	char * tempPop = NULL;
+	i = 0;
+	wprintf(L"\tBytecode Segmented:\n");
+	while(i<length){
+		chans_opcode_t *co = chans_get_opcode(data+i);
+
+		if(co==NULL)
+		{
+			dbgprintf("unknown opcode: %hhx\n", *(data+i));
+			exit(1);
+		}
+		switch(co->opcode)
+		{
+			case CO_RETURN:
+				wprintf(L"return %s;\n", ACC);
+				freeACC(0);
+				break;
+			case CO_NEW:
+				argcount = *U8P(data+i+1);
+				funcname = freeGetACC(0);
+				args = getFunctionCall(argcount);
+				asprintf(&ACC, "new %s(%s)", funcname,args);
+				free(funcname);
+				free(args);
+				break;
+			case CO_PUSH_ACC:
+				pushStack(ACC);
+				freeACC(0);
+				//wprintf(L"       PUSHED TO STACK: NOW ACC = %s\n", ACC);
+				break;
+			case CO_ADD:
+				temp = freeGetACC(0);
+				tempPop = popStack();
+				asprintf(&ACC, "(%s + %s)", tempPop, temp);
+				free(temp);
+				free(tempPop);
+				break;
+			case CO_SUB:
+				temp = freeGetACC(0);
+				tempPop = popStack();
+				asprintf(&ACC, "(%s - %s)", tempPop, temp);
+				free(temp);
+				free(tempPop);
+				break;
+			case CO_MUL:
+				temp = freeGetACC(0);
+				tempPop = popStack();
+				asprintf(&ACC, "(%s * %s)", tempPop, temp);
+				free(temp);
+				free(tempPop);
+				break;
+			case CO_DIV:
+				temp = freeGetACC(0);
+				tempPop = popStack();
+				asprintf(&ACC, "(%s / %s)", tempPop, temp);
+				free(temp);
+				free(tempPop);
+				break;
+			case CO_AND:
+				temp = freeGetACC(0);
+				tempPop = popStack();
+				asprintf(&ACC, "(%s & %s)", tempPop, temp);
+				free(temp);
+				free(tempPop);
+				break;
+			case CO_SHIFTL:
+				temp = freeGetACC(0);
+				tempPop = popStack();
+				asprintf(&ACC, "%s << %s", tempPop, temp);
+				free(temp);
+				free(tempPop);
+				break;
+			case CO_SHIFTR:
+				temp = freeGetACC(0);
+				tempPop = popStack();
+				asprintf(&ACC, "%s >> %s", tempPop, temp);
+				free(temp);
+				free(tempPop);
+				break;
+			case CO_EQ:
+				temp = freeGetACC(0);
+				tempPop = popStack();
+				asprintf(&ACC, "%s == %s", tempPop, temp);
+				free(temp);
+				free(tempPop);
+				break;
+			case CO_NEQ:
+				temp = freeGetACC(0);
+				tempPop = popStack();
+				asprintf(&ACC, "(%s != %s)", tempPop, temp);
+				free(temp);
+				free(tempPop);
+				break;
+			case CO_LT:
+				temp = freeGetACC(0);
+				tempPop = popStack();
+				asprintf(&ACC, "(%s < %s)", tempPop, temp);
+				free(temp);
+				free(tempPop);
+				break;
+			case CO_GT:
+				temp = freeGetACC(0);
+				tempPop = popStack();
+				asprintf(&ACC, "(%s > %s)", tempPop, temp);
+				free(temp);
+				free(tempPop);
+				break;
+			case CO_LTE:
+				temp = freeGetACC(0);
+				tempPop = popStack();
+				asprintf(&ACC, "(%s <= %s)", tempPop, temp);
+				free(temp);
+				free(tempPop);
+				break;
+			case CO_GTE:
+				temp = freeGetACC(0);
+				tempPop = popStack();
+				asprintf(&ACC, "(%s >= %s)", tempPop, temp);
+				free(temp);
+				free(tempPop);
+				break;
+			case CO_NOT:
+				temp = freeGetACC(0);
+				asprintf(&ACC, "!(%s)", temp);
+				free(temp);
+				break;
+			case CO_LOAD_S8:
+				freeACC(1);
+				asprintf(&ACC, "%d", *U8P(data+i+1));
+				break;
+			case CO_ADD_IMM:
+				temp = freeGetACC(0);
+				asprintf(&ACC, "(%s + %d)", temp, *U8P(data+i+1));
+				free(temp);
+				break;
+			case CO_SUB_IMM:
+				temp = freeGetACC(0);
+				asprintf(&ACC, "(%s - %d)", temp, *U8P(data+i+1));
+				free(temp);
+				break;
+			case CO_MUL_IMM:
+				temp = freeGetACC(0);
+				asprintf(&ACC, "(%s * %d)", temp, *U8P(data+i+1));
+				free(temp);
+				break;
+			case CO_DIV_IMM:
+				temp = freeGetACC(0);
+				asprintf(&ACC, "(%s / %d)", temp, *U8P(data+i+1));
+				free(temp);
+				break;
+			case CO_MOD_IMM:
+				temp = freeGetACC(0);
+				asprintf(&ACC, "(%s %% %d)", temp, *U8P(data+i+1));
+				free(temp);
+				break;
+			case CO_EQ_IMM:
+				temp = freeGetACC(0);
+				asprintf(&ACC, "(%s == %d)", temp, *U8P(data+i+1));
+				free(temp);
+				break;
+			case CO_NEQ_IMM:
+				temp = freeGetACC(0);
+				asprintf(&ACC, "(%s != %d)", temp, *U8P(data+i+1));
+				free(temp);
+				break;
+			case CO_LT_IMM:
+				temp = freeGetACC(0);
+				asprintf(&ACC, "(%s < %d)", temp, *U8P(data+i+1));
+				free(temp);
+				break;
+			case CO_GT_IMM:
+				temp = freeGetACC(0);
+				asprintf(&ACC, "(%s > %d)", temp, *U8P(data+i+1));
+				free(temp);
+				break;
+			case CO_LTE_IMM:
+				temp = freeGetACC(0);
+				asprintf(&ACC, "(%s <= %d)", temp, *U8P(data+i+1));
+				free(temp);
+				break;
+			case CO_GTE_IMM:
+				temp = freeGetACC(0);
+				asprintf(&ACC, "(%s >= %d)", temp, *U8P(data+i+1));
+				free(temp);
+				break;
+			case CO_LOAD_U16:
+				freeACC(1);
+				asprintf(&ACC, "%d", be16(*U16P(data+i+1)));
+				break;
+			case CO_LOAD_U32:
+				freeACC(1);
+				asprintf(&ACC, "%ld", be32(*U32P(data+i+1)));
+				break;
+			case CO_LOAD_F64:
+				freeACC(1);
+				asprintf(&ACC, "%f", bef64(*F64P(data+i+1)));
+				break;
+			case CO_LOAD_STR:
+				freeACC(1);
+				asprintf(&ACC, "\"%ls\"", stringLiterals[be16(*U16P(data+i+1))]);
+				//wprintf(L"       NOW ACC = %s\n", ACC);
+				break;
+			case CO_GET_LOCAL_SYMBOL:
+				freeACC(1);
+				asprintf(&ACC, "%s", exportedMethods[be16(*U16P(data+i)) & 0xfff]);
+				//wprintf(L"       NOW ACC = %s\n", ACC);
+				break;
+			case CO_CALL_ACC_ARGS:
+				argcount = *U8P(data+i+1);
+				funcname = freeGetACC(0);
+				args = getFunctionCall(argcount);
+				asprintf(&ACC, "%s(%s)", funcname,args);
+				free(funcname);
+				free(args);
+				break;
+			case CO_GET_EXT_SYMBOL_DEREF:
+				temp = freeGetACC(0);
+				
+				asprintf(&ACC, "%s.%s",temp, importedMethods[be16(*U16P(data+i+1))]);
+				free(temp);
+				break;
+			case CO_SET_EXT_SYMBOL_DEREF:
+				tempPop = popStack();
+				wprintf(L"%s.%s = %s;\n", ACC, importedMethods[be16(*U16P(data+i+1))], tempPop);
+				free(tempPop);
+				freeACC(0);
+				break;
+			case CO_SET_LOCAL_SYMBOL:
+				wprintf(L"%s = %s;\n", exportedMethods[be16(*U16P(data+i)) & 0xfff], ACC);
+				freeACC(0);
+				break;
+			case CO_ARRAY_OP:
+				switch(*U8P(data+i+1)){
+					case 0x3e:
+						temp = freeGetACC(0);
+						tempPop = popStack();
+						asprintf(&ACC, "%s[%s]", tempPop, temp);
+						free(temp);
+						free(tempPop);
+						break;
+					case 0x3f:
+						temp = popStack();
+						tempPop = popStack();
+						wprintf(L"%s[%s] = %s;\n", tempPop, ACC, temp);
+						free(temp);
+						free(tempPop);
+						freeACC(0);
+						break;
+					default:
+						wprintf(L" UNKNOWN ARRAY OP");
+						break;
+				}
+				break;
+			case CO_CALL_EXT_SYMBOL_ARGS:
+				argcount = *U8P(data+i+3);
+				funcname = freeGetACC(0);
+				args = getFunctionCall(argcount);
+				asprintf(&ACC, "%s.%s(%s)",funcname,importedMethods[be16(*U16P(data+i+1))], args);
+				free(funcname);
+				free(args);
+				break;
+			case CO_GET_TEMP:
+				freeACC(1);
+				asprintf(&ACC, "unamedVar_%d", be16(*U16P(data+i)) & 0xfff);
+				break;
+			case CO_SET_TEMP:
+				wprintf(L"unamedVar_%d = %s; \n", be16(*U16P(data+i)) & 0xfff, ACC);
+				freeACC(0);
+				break;
+			case CO_EOC:
+				freeACC(1);
+				break;
+			default:
+				wprintf(L"       0x%02X Wtf code?\n", co->opcode);
+				break;
+		}
+		i += co->length;
+	}
+
+}
 
 void parseByteCode(u8 * data, int length){
 	int i = 0, j = 0;
@@ -185,7 +545,7 @@ int main(int argc, char * argv[]){
 		wprintf(L"Failed to iconv_open %s to %s.\n", fromcode, tocode);
 		exit(EXIT_FAILURE);
 	}
-
+	
 	bacs_header HEAD;
 	
 	int offset = 0;
@@ -316,6 +676,7 @@ int main(int argc, char * argv[]){
 	wprintf(L"\tStart: 0x%04X\n", 1);
 	wprintf(L"\tLength: 0x%04X\n", be32(methodTable[0].offset)-1);
 	
+	parseByteCodeToCode(&FDS[1], be32(methodTable[0].offset)-1);
 	parseByteCode(&FDS[1], be32(methodTable[0].offset)-1);
 
 	
@@ -331,6 +692,7 @@ int main(int argc, char * argv[]){
 		wprintf(L"\tMethod ID: 0x%02X (%s)\n", be16(methodTable[i].table4_method), exportedMethods[be16(methodTable[i].table4_method)]);
 		wprintf(L"\tParam Count: %d\n",methodTable[i].param_count);
 		wprintf(L"\tTemp Count: 0x%02X\n", methodTable[i].temp_count);
+		parseByteCodeToCode(&FDS[be32(methodTable[i].offset)], bytelength);
 		parseByteCode(&FDS[be32(methodTable[i].offset)], bytelength);
 	}
 	wprintf(L"\n");
