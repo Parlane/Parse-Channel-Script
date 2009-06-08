@@ -1,6 +1,5 @@
 /*
-**	What can you do with this: Anything you want, you can even say you wrote it and impress your friends.. HA HA.
-**	Author: Matthew Parlane
+**	Author: Matthew Parlane, booto
 **	Email: matthew_parlane@ hot mail [dot] (com)
 */
 #define _GNU_SOURCE
