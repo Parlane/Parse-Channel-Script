@@ -382,9 +382,22 @@ void parseByteCodeToCode(u8 * data, int length){
 				tempPop = freeGetACC();
 				wprintf(L"if(%s){\n", tempPop);
 				parseByteCodeToCode(&data[i+co->length], (be16(*U16P(data+i)) & 0xfff));
+				freeACC(1);
+				chans_opcode_t *cotemp = chans_get_opcode(data + i + (be16(*U16P(data+i)) & 0xfff));
+				if(cotemp->opcode == CO_GOTO){
+					wprintf(L"}else{\n");
+					parseByteCodeToCode(data + i + (be16(*U16P(data+i)) & 0xfff), (be16(*U16P(data + i + (be16(*U16P(data+i)) & 0xfff))) & 0xfff));
+					freeACC(1);
+					//wprintf(L"start = 0x%04X\n", i + (be16(*U16P(data+i)) & 0xfff));
+					i += (be16(*U16P(data+i)) & 0xfff) + be16(*U16P(data + i + (be16(*U16P(data+i)) & 0xfff))) & 0xfff;
+					
+				}else{
+					i += be16(*U16P(data+i)) & 0xfff;
+				}
 				wprintf(L"}\n");
 				free(tempPop);
-				i += be16(*U16P(data+i)) & 0xfff;
+				break;
+			case CO_GOTO:
 				break;
 			default:
 				wprintf(L"       0x%02X Wtf code?\n", co->opcode);
