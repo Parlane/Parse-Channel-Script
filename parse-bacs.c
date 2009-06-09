@@ -735,7 +735,7 @@ int main(int argc, char * argv[]){
 	for(i=0; i<be32(HEAD.table4_count);i++){
 		wprintf(L"(0x%02X) ", i);
 		wprintf(L"Size = %02d.", (int) strlen(exportedMethods[i]));
-		if(stringLiterals[i] != NULL){
+		if(exportedMethods[i] != NULL){
 			wprintf(L" (%s)", exportedMethods[i]);
 		}
 		wprintf(L"\n");
