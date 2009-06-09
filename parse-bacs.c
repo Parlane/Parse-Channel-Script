@@ -40,6 +40,7 @@ wchar_t ** stringLiterals = NULL;
 	
 	stack_node * rootStack = NULL;
 	char * ACC = NULL;
+	char * ACCBackup = NULL;
 	
 	void pushStack(char * string){
 		stack_node * newNode = calloc(1,sizeof(stack_node));
@@ -57,7 +58,7 @@ wchar_t ** stringLiterals = NULL;
 		rootStack = temp;
 		return ret;
 	}
-	void freeACC(int print){
+	void freeACC(int print){		
 		if(ACC){
 			if(print) wprintf(L"%s;\n", ACC);
 			free(ACC);
@@ -65,15 +66,14 @@ wchar_t ** stringLiterals = NULL;
 		ACC = NULL;
 	}
 
-	char * freeGetACC(int print){
-		char * ret = NULL;
-		asprintf(&ret,"%s", ACC);
+	char * freeGetACC(){
+		
+		asprintf(&ACCBackup,"%s", ACC);
 		if(ACC){
-			if(print) wprintf(L"%s;\n", ACC);
 			free(ACC);
 		}
 		ACC = NULL;
-		return ret;
+		return ACCBackup;
 	}
 
 /* END: Matthews temporary placement of structure defines */
@@ -107,7 +107,7 @@ void parseByteCodeToCode(u8 * data, int length){
 	char * temp = NULL;
 	char * tempPop = NULL;
 	i = 0;
-	wprintf(L"\tBytecode Segmented:\n");
+	//wprintf(L"\tBytecode Segmented:\n");
 	while(i<length){
 		chans_opcode_t *co = chans_get_opcode(data+i);
 
@@ -124,7 +124,7 @@ void parseByteCodeToCode(u8 * data, int length){
 				break;
 			case CO_NEW:
 				argcount = *U8P(data+i+1);
-				funcname = freeGetACC(0);
+				funcname = freeGetACC();
 				args = getFunctionCall(argcount);
 				asprintf(&ACC, "new %s(%s)", funcname,args);
 				free(funcname);
@@ -136,98 +136,98 @@ void parseByteCodeToCode(u8 * data, int length){
 				//wprintf(L"       PUSHED TO STACK: NOW ACC = %s\n", ACC);
 				break;
 			case CO_ADD:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				tempPop = popStack();
 				asprintf(&ACC, "(%s + %s)", tempPop, temp);
 				free(temp);
 				free(tempPop);
 				break;
 			case CO_SUB:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				tempPop = popStack();
 				asprintf(&ACC, "(%s - %s)", tempPop, temp);
 				free(temp);
 				free(tempPop);
 				break;
 			case CO_MUL:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				tempPop = popStack();
 				asprintf(&ACC, "(%s * %s)", tempPop, temp);
 				free(temp);
 				free(tempPop);
 				break;
 			case CO_DIV:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				tempPop = popStack();
 				asprintf(&ACC, "(%s / %s)", tempPop, temp);
 				free(temp);
 				free(tempPop);
 				break;
 			case CO_AND:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				tempPop = popStack();
 				asprintf(&ACC, "(%s & %s)", tempPop, temp);
 				free(temp);
 				free(tempPop);
 				break;
 			case CO_SHIFTL:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				tempPop = popStack();
 				asprintf(&ACC, "%s << %s", tempPop, temp);
 				free(temp);
 				free(tempPop);
 				break;
 			case CO_SHIFTR:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				tempPop = popStack();
 				asprintf(&ACC, "%s >> %s", tempPop, temp);
 				free(temp);
 				free(tempPop);
 				break;
 			case CO_EQ:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				tempPop = popStack();
 				asprintf(&ACC, "%s == %s", tempPop, temp);
 				free(temp);
 				free(tempPop);
 				break;
 			case CO_NEQ:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				tempPop = popStack();
 				asprintf(&ACC, "(%s != %s)", tempPop, temp);
 				free(temp);
 				free(tempPop);
 				break;
 			case CO_LT:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				tempPop = popStack();
 				asprintf(&ACC, "(%s < %s)", tempPop, temp);
 				free(temp);
 				free(tempPop);
 				break;
 			case CO_GT:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				tempPop = popStack();
 				asprintf(&ACC, "(%s > %s)", tempPop, temp);
 				free(temp);
 				free(tempPop);
 				break;
 			case CO_LTE:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				tempPop = popStack();
 				asprintf(&ACC, "(%s <= %s)", tempPop, temp);
 				free(temp);
 				free(tempPop);
 				break;
 			case CO_GTE:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				tempPop = popStack();
 				asprintf(&ACC, "(%s >= %s)", tempPop, temp);
 				free(temp);
 				free(tempPop);
 				break;
 			case CO_NOT:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				asprintf(&ACC, "!(%s)", temp);
 				free(temp);
 				break;
@@ -236,57 +236,57 @@ void parseByteCodeToCode(u8 * data, int length){
 				asprintf(&ACC, "%d", *U8P(data+i+1));
 				break;
 			case CO_ADD_IMM:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				asprintf(&ACC, "(%s + %d)", temp, *U8P(data+i+1));
 				free(temp);
 				break;
 			case CO_SUB_IMM:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				asprintf(&ACC, "(%s - %d)", temp, *U8P(data+i+1));
 				free(temp);
 				break;
 			case CO_MUL_IMM:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				asprintf(&ACC, "(%s * %d)", temp, *U8P(data+i+1));
 				free(temp);
 				break;
 			case CO_DIV_IMM:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				asprintf(&ACC, "(%s / %d)", temp, *U8P(data+i+1));
 				free(temp);
 				break;
 			case CO_MOD_IMM:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				asprintf(&ACC, "(%s %% %d)", temp, *U8P(data+i+1));
 				free(temp);
 				break;
 			case CO_EQ_IMM:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				asprintf(&ACC, "(%s == %d)", temp, *U8P(data+i+1));
 				free(temp);
 				break;
 			case CO_NEQ_IMM:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				asprintf(&ACC, "(%s != %d)", temp, *U8P(data+i+1));
 				free(temp);
 				break;
 			case CO_LT_IMM:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				asprintf(&ACC, "(%s < %d)", temp, *U8P(data+i+1));
 				free(temp);
 				break;
 			case CO_GT_IMM:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				asprintf(&ACC, "(%s > %d)", temp, *U8P(data+i+1));
 				free(temp);
 				break;
 			case CO_LTE_IMM:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				asprintf(&ACC, "(%s <= %d)", temp, *U8P(data+i+1));
 				free(temp);
 				break;
 			case CO_GTE_IMM:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				asprintf(&ACC, "(%s >= %d)", temp, *U8P(data+i+1));
 				free(temp);
 				break;
@@ -314,14 +314,14 @@ void parseByteCodeToCode(u8 * data, int length){
 				break;
 			case CO_CALL_ACC_ARGS:
 				argcount = *U8P(data+i+1);
-				funcname = freeGetACC(0);
+				funcname = freeGetACC();
 				args = getFunctionCall(argcount);
 				asprintf(&ACC, "%s(%s)", funcname,args);
 				free(funcname);
 				free(args);
 				break;
 			case CO_GET_EXT_SYMBOL_DEREF:
-				temp = freeGetACC(0);
+				temp = freeGetACC();
 				
 				asprintf(&ACC, "%s.%s",temp, importedMethods[be16(*U16P(data+i+1))]);
 				free(temp);
@@ -339,7 +339,7 @@ void parseByteCodeToCode(u8 * data, int length){
 			case CO_ARRAY_OP:
 				switch(*U8P(data+i+1)){
 					case 0x3e:
-						temp = freeGetACC(0);
+						temp = freeGetACC();
 						tempPop = popStack();
 						asprintf(&ACC, "%s[%s]", tempPop, temp);
 						free(temp);
@@ -360,7 +360,7 @@ void parseByteCodeToCode(u8 * data, int length){
 				break;
 			case CO_CALL_EXT_SYMBOL_ARGS:
 				argcount = *U8P(data+i+3);
-				funcname = freeGetACC(0);
+				funcname = freeGetACC();
 				args = getFunctionCall(argcount);
 				asprintf(&ACC, "%s.%s(%s)",funcname,importedMethods[be16(*U16P(data+i+1))], args);
 				free(funcname);
@@ -376,6 +376,15 @@ void parseByteCodeToCode(u8 * data, int length){
 				break;
 			case CO_EOC:
 				freeACC(1);
+				break;
+			case CO_POP_AND_BRANCH:
+				// here goes :(
+				tempPop = freeGetACC();
+				wprintf(L"if(%s){\n", tempPop);
+				parseByteCodeToCode(&data[i+co->length], (be16(*U16P(data+i)) & 0xfff));
+				wprintf(L"}\n");
+				free(tempPop);
+				i += be16(*U16P(data+i)) & 0xfff;
 				break;
 			default:
 				wprintf(L"       0x%02X Wtf code?\n", co->opcode);
@@ -673,11 +682,17 @@ int main(int argc, char * argv[]){
 	
 	wprintf(L"(Real Main Method)\n", i, i);
 	wprintf(L"\tStart: 0x%04X\n", 1);
-	wprintf(L"\tLength: 0x%04X\n", be32(methodTable[0].offset)-1);
+	if(be32(HEAD.table1_count)){
+		wprintf(L"\tLength: 0x%04X\n", be32(methodTable[0].offset)-1);
 	
-	parseByteCodeToCode(&FDS[1], be32(methodTable[0].offset)-1);
-	parseByteCode(&FDS[1], be32(methodTable[0].offset)-1);
-
+		parseByteCodeToCode(&FDS[1], be32(methodTable[0].offset)-1);
+		parseByteCode(&FDS[1], be32(methodTable[0].offset)-1);
+	}else{
+		wprintf(L"\tLength: 0x%04X\n", be32(HEAD.fds_size)-1);
+	
+		parseByteCodeToCode(&FDS[1], be32(HEAD.fds_size)-1);
+		parseByteCode(&FDS[1], be32(HEAD.fds_size)-1);
+	}
 	
 	for(i=0; i<be32(HEAD.table1_count);i++){
 		wprintf(L"    (0x%02X)\n", i, i);
