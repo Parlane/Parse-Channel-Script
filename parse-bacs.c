@@ -37,6 +37,10 @@ wchar_t ** stringLiterals = NULL;
 		char * string;
 		stack_node * next;
 	};
+	typedef struct {
+		u32 offset;
+		u8 data[0x20];
+	} table5Block;
 	
 	stack_node * rootStack = NULL;
 	char * ACC = NULL;
@@ -58,9 +62,9 @@ wchar_t ** stringLiterals = NULL;
 		rootStack = temp;
 		return ret;
 	}
-	void freeACC(int print){		
+	void freeACC(int print, int offset){		
 		if(ACC){
-			if(print) wprintf(L"%s;\n", ACC);
+			if(print) wprintf(L"%*s%s;\n", offset,"", ACC);
 			free(ACC);
 		}
 		ACC = NULL;
@@ -100,7 +104,7 @@ char * getFunctionCall(int numOfArgs){
 	return functionCall;
 }
 
-void parseByteCodeToCode(u8 * data, int length){
+void parseByteCodeToCode(u8 * data, int length, int offset){
 	int i = 0, j = 0, argcount = 0;
 	char * funcname = NULL;
 	char * args = NULL;
@@ -119,8 +123,8 @@ void parseByteCodeToCode(u8 * data, int length){
 		switch(co->opcode)
 		{
 			case CO_RETURN:
-				wprintf(L"return %s;\n", ACC);
-				freeACC(0);
+				wprintf(L"%*sreturn %s;\n", offset,"", ACC);
+				freeACC(0,offset);
 				break;
 			case CO_NEW:
 				argcount = *U8P(data+i+1);
@@ -132,7 +136,7 @@ void parseByteCodeToCode(u8 * data, int length){
 				break;
 			case CO_PUSH_ACC:
 				pushStack(ACC);
-				freeACC(0);
+				freeACC(0,offset);
 				//wprintf(L"       PUSHED TO STACK: NOW ACC = %s\n", ACC);
 				break;
 			case CO_ADD:
@@ -232,7 +236,7 @@ void parseByteCodeToCode(u8 * data, int length){
 				free(temp);
 				break;
 			case CO_LOAD_S8:
-				freeACC(1);
+				freeACC(1,offset);
 				asprintf(&ACC, "%d", *U8P(data+i+1));
 				break;
 			case CO_ADD_IMM:
@@ -291,24 +295,24 @@ void parseByteCodeToCode(u8 * data, int length){
 				free(temp);
 				break;
 			case CO_LOAD_U16:
-				freeACC(1);
+				freeACC(1,offset);
 				asprintf(&ACC, "%d", be16(*U16P(data+i+1)));
 				break;
 			case CO_LOAD_U32:
-				freeACC(1);
+				freeACC(1,offset);
 				asprintf(&ACC, "%ld", be32(*U32P(data+i+1)));
 				break;
 			case CO_LOAD_F64:
-				freeACC(1);
+				freeACC(1,offset);
 				asprintf(&ACC, "%f", bef64(*F64P(data+i+1)));
 				break;
 			case CO_LOAD_STR:
-				freeACC(1);
+				freeACC(1,offset);
 				asprintf(&ACC, "\"%ls\"", stringLiterals[be16(*U16P(data+i+1))]);
 				//wprintf(L"       NOW ACC = %s\n", ACC);
 				break;
 			case CO_GET_LOCAL_SYMBOL:
-				freeACC(1);
+				freeACC(1,offset);
 				asprintf(&ACC, "%s", exportedMethods[be16(*U16P(data+i)) & 0xfff]);
 				//wprintf(L"       NOW ACC = %s\n", ACC);
 				break;
@@ -328,13 +332,13 @@ void parseByteCodeToCode(u8 * data, int length){
 				break;
 			case CO_SET_EXT_SYMBOL_DEREF:
 				tempPop = popStack();
-				wprintf(L"%s.%s = %s;\n", ACC, importedMethods[be16(*U16P(data+i+1))], tempPop);
+				wprintf(L"%*s%s.%s = %s;\n", offset,"", ACC, importedMethods[be16(*U16P(data+i+1))], tempPop);
 				free(tempPop);
-				freeACC(0);
+				freeACC(0,offset);
 				break;
 			case CO_SET_LOCAL_SYMBOL:
-				wprintf(L"%s = %s;\n", exportedMethods[be16(*U16P(data+i)) & 0xfff], ACC);
-				freeACC(0);
+				wprintf(L"%*s%s = %s;\n", offset,"",exportedMethods[be16(*U16P(data+i)) & 0xfff], ACC);
+				freeACC(0,offset);
 				break;
 			case CO_ARRAY_OP:
 				switch(*U8P(data+i+1)){
@@ -348,10 +352,10 @@ void parseByteCodeToCode(u8 * data, int length){
 					case 0x3f:
 						temp = popStack();
 						tempPop = popStack();
-						wprintf(L"%s[%s] = %s;\n", tempPop, ACC, temp);
+						wprintf(L"%*s%s[%s] = %s;\n", offset,"", tempPop, ACC, temp);
 						free(temp);
 						free(tempPop);
-						freeACC(0);
+						freeACC(0,offset);
 						break;
 					default:
 						wprintf(L" UNKNOWN ARRAY OP");
@@ -367,40 +371,40 @@ void parseByteCodeToCode(u8 * data, int length){
 				free(args);
 				break;
 			case CO_GET_TEMP:
-				freeACC(1);
+				freeACC(1,offset);
 				asprintf(&ACC, "unamedVar_%d", be16(*U16P(data+i)) & 0xfff);
 				break;
 			case CO_SET_TEMP:
-				wprintf(L"unamedVar_%d = %s; \n", be16(*U16P(data+i)) & 0xfff, ACC);
-				freeACC(0);
+				wprintf(L"%*sunamedVar_%d = %s; \n", offset,"", be16(*U16P(data+i)) & 0xfff, ACC);
+				freeACC(0,offset);
 				break;
 			case CO_EOC:
-				freeACC(1);
+				freeACC(1,offset);
 				break;
 			case CO_POP_AND_BRANCH:
 				// here goes :(
 				tempPop = freeGetACC();
-				wprintf(L"if(%s){\n", tempPop);
-				parseByteCodeToCode(&data[i+co->length], (be16(*U16P(data+i)) & 0xfff));
-				freeACC(1);
+				wprintf(L"%*sif(%s){\n", offset,"", tempPop);
+				parseByteCodeToCode(&data[i+co->length], (be16(*U16P(data+i)) & 0xfff), offset+5);
+				freeACC(1,offset+5);
 				chans_opcode_t *cotemp = chans_get_opcode(data + i + (be16(*U16P(data+i)) & 0xfff));
 				if(cotemp->opcode == CO_GOTO){
-					wprintf(L"}else{\n");
-					parseByteCodeToCode(data + i + (be16(*U16P(data+i)) & 0xfff), (be16(*U16P(data + i + (be16(*U16P(data+i)) & 0xfff))) & 0xfff));
-					freeACC(1);
+					wprintf(L"%*s}else{\n", offset,"");
+					parseByteCodeToCode(data + i + (be16(*U16P(data+i)) & 0xfff), (be16(*U16P(data + i + (be16(*U16P(data+i)) & 0xfff))) & 0xfff), offset);
+					freeACC(1,offset+5);
 					//wprintf(L"start = 0x%04X\n", i + (be16(*U16P(data+i)) & 0xfff));
 					i += (be16(*U16P(data+i)) & 0xfff) + be16(*U16P(data + i + (be16(*U16P(data+i)) & 0xfff))) & 0xfff;
 					
 				}else{
 					i += be16(*U16P(data+i)) & 0xfff;
 				}
-				wprintf(L"}\n");
+				wprintf(L"%*s}\n", offset,"");
 				free(tempPop);
 				break;
 			case CO_GOTO:
 				break;
 			default:
-				wprintf(L"       0x%02X Wtf code?\n", co->opcode);
+				wprintf(L"%*s0x%02X Wtf code?\n", offset,"", co->opcode);
 				break;
 		}
 		i += co->length;
@@ -690,20 +694,32 @@ int main(int argc, char * argv[]){
 		}
 	}
 	
+	
+	
+	
+	
+	
 	int bytelength = 0;
 	wprintf(L"Local Methods (Table 1):\n");
 	
 	wprintf(L"(Real Main Method)\n", i, i);
 	wprintf(L"\tStart: 0x%04X\n", 1);
-	if(be32(HEAD.table1_count)){
-		wprintf(L"\tLength: 0x%04X\n", be32(methodTable[0].offset)-1);
 	
-		parseByteCodeToCode(&FDS[1], be32(methodTable[0].offset)-1);
+	if(be32(HEAD.table1_count)){
+		wprintf(L"\tLength: 0x%04X\n\n", be32(methodTable[0].offset)-1);
+		
+		wprintf(L"%*sfunction entryPoint(){\n", 5, "");	
+		parseByteCodeToCode(&FDS[1], be32(methodTable[0].offset)-1, 10);
+		wprintf(L"%*s}\n\n", 5, "");
+		
 		parseByteCode(&FDS[1], be32(methodTable[0].offset)-1);
 	}else{
-		wprintf(L"\tLength: 0x%04X\n", be32(HEAD.fds_size)-1);
-	
-		parseByteCodeToCode(&FDS[1], be32(HEAD.fds_size)-1);
+		wprintf(L"\tLength: 0x%04X\n\n", be32(HEAD.fds_size)-1);
+		
+		wprintf(L"%*sfunction entryPoint(){\n", 5, "");
+		parseByteCodeToCode(&FDS[1], be32(HEAD.fds_size)-1, 10);
+		wprintf(L"%*s}\n\n", 5, "");
+		
 		parseByteCode(&FDS[1], be32(HEAD.fds_size)-1);
 	}
 	
@@ -718,8 +734,12 @@ int main(int argc, char * argv[]){
 		wprintf(L"\tLength: 0x%04X\n", bytelength);
 		wprintf(L"\tMethod ID: 0x%02X (%s)\n", be16(methodTable[i].table4_method), exportedMethods[be16(methodTable[i].table4_method)]);
 		wprintf(L"\tParam Count: %d\n",methodTable[i].param_count);
-		wprintf(L"\tTemp Count: 0x%02X\n", methodTable[i].temp_count);
-		parseByteCodeToCode(&FDS[be32(methodTable[i].offset)], bytelength);
+		wprintf(L"\tTemp Count: 0x%02X\n\n", methodTable[i].temp_count);
+		
+		wprintf(L"%*sfunction %s(){\n", 5, "", exportedMethods[be16(methodTable[i].table4_method)]);
+		parseByteCodeToCode(&FDS[be32(methodTable[i].offset)], bytelength, 10);
+		wprintf(L"%*s}\n\n", 5, "");
+		
 		parseByteCode(&FDS[be32(methodTable[i].offset)], bytelength);
 	}
 	wprintf(L"\n");
@@ -755,6 +775,18 @@ int main(int argc, char * argv[]){
 	}
 	wprintf(L"\n");
 	
+	int blockCount = (be32(HEAD.fds_size)+255)/256;
+	
+	//Table 5: Exported Methods/Variables
+	table5Block tempBlock;
+	offset = 0x20 + be32(HEAD.table5_offset);
+	fseek(fp, offset,SEEK_SET);
+	for(i=0; i<blockCount;i++){
+		fread(&tempBlock, 0x24, 1, fp);
+		wprintf(L"%d)\n", i);
+		wprintf(L"\tOffset: 0x%02X\n", be32(tempBlock.offset));
+		wprintf(L"\tBytes: 0x %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n", tempBlock.data[0], tempBlock.data[1], tempBlock.data[2], tempBlock.data[3], tempBlock.data[4], tempBlock.data[5], tempBlock.data[6], tempBlock.data[7], tempBlock.data[8], tempBlock.data[9], tempBlock.data[10], tempBlock.data[11], tempBlock.data[12], tempBlock.data[13], tempBlock.data[14], tempBlock.data[15]);
+	}
 	
 	free(methodTable);
 	
@@ -763,5 +795,4 @@ int main(int argc, char * argv[]){
 	fclose(fp);
 
 	iconv_close(cd);
-	
 }

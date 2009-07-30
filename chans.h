@@ -11,11 +11,10 @@ typedef struct {
 	u8      unk[0x14]; // 0x0000000C
 	//END: Main Header
 
-
 	// All offsets are from 0x20
-	u32     unk10; // 0x00000020
-	u32     unk20; // 0x00000024
-	u32     unk30; // 0x00000028
+	u32     field_0; // 0x00000020
+	u32     field_4; // 0x00000024
+	u32     field_8; // 0x00000028
 
 	// First data section (this is the bytecode)
 	u32     fds_size;  // 0x0000002C
@@ -23,8 +22,8 @@ typedef struct {
 
 	u32     table4_count; // 0x00000034
 
-	u32     unk5; // 0x00000038
-	u32     unk6; // 0x0000003C
+	u32     field_18; // 0x00000038
+	u32     field_1C; // 0x0000003C
 
 	// Table 1 is made up of 8 byte chunks
 	u32     table1_count; // 0x00000040
@@ -39,17 +38,16 @@ typedef struct {
 	u32     table3_count; // 0x00000050
 	u32     table3_offset; // 0x00000054
 
-	// Possibly unused table
-	u32     unk7; // 0x00000058
-	u32     unk8; // 0x0000005C
+	u32     field_38; // 0x00000058
+	u32     field_3C; // 0x0000005C
 
 	u32     table4_offset; // 0x00000060
 
-	u32     unk9_offset; // 0x00000064
+	u32     table5_offset; // 0x00000064
 
-	u32 unk11; // 0x00000068
-	u32 unk12;  // 0x0000006C
-	u8 unk13[0x10]; // 0x00000070
+	u32 	field_48; // 0x00000068
+	u32		field_4C;  // 0x0000006C
+	u8 		field_50[0x10]; // 0x00000070
 
 } bacs_header;
 
