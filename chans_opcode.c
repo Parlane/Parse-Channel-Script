@@ -8,11 +8,12 @@ chans_opcode_t chans_4bit_opcode_list[] =
 	{CO_GET_TEMP, 2, ARG_TEMP12, L"ACC = temp_%03hx"},
 	{CO_SET_LOCAL_SYMBOL, 2, ARG_LOCAL12, L"%s = ACC"},
 	{CO_SET_TEMP, 2, ARG_TEMP12, L"temp_%03hx = ACC"},
-	{CO_POP_AND_BRANCH, 2, ARG_JMP2, L"IF(!POP) PC = PC + 0x%04hx [dst: 0x%08x]"},
+	{CO_POP_AND_BRANCH, 2, ARG_JMP2, L"IF(!ACC) PC = PC + 0x%04hx [dst: 0x%08x]"},
 	{CO_POP_AND_BRANCH2, 2, ARG_JMP1, L"IF(!POP) PC = PC + 0x%04hx + 1 [dst: 0x%08x]"},
 	{CO_GOTO, 2, ARG_JMP2, L"PC = PC + %04hx [dst: 0x%08x]"},
-	{CO_Cx, 2, ARG_TEMP12, L"UNKNOWN EFFECT [Cx] ARG1=%03hx"},
-	{CO_8x, 2, ARG_TEMP12, L"UNKNOWN EFFECT [8x] ARG1=%03hx"},
+	{CO_Cx, 2, ARG_TEMP12, L"UNKNOWN EFFECT [Cx] ARG1=0x%03hx"},
+	{CO_8x, 2, ARG_TEMP12, L"UNKNOWN EFFECT [8x] ARG1=0x%03hx"},
+	{CO_Fx, 2, ARG_TEMP12, L"UNKNOWN EFFECT [Fx] ARG1=0x%03hx"},
 };
 
 chans_opcode_t chans_8bit_opcode_list[] =
@@ -70,6 +71,7 @@ chans_opcode_t chans_8bit_opcode_list[] =
 chans_opcode_t *chans_get_opcode(char *location)
 {
 	u8 opcode = *location;
+	//wprintf(L"WTF opcode?: %d\n", opcode);
 	chans_opcode_t *rv = NULL;
 	if(opcode < 0x40)
 	{

@@ -55,7 +55,7 @@
 #define CO_OR_IMM   0x1f
 #define CO_XOR_IMM  0x20
 #define CO_EQ_IMM   0x21
-#define CO_NEQ_IMM   0x22
+#define CO_NEQ_IMM  0x22
 #define CO_LT_IMM   0x23
 #define CO_GT_IMM   0x24
 #define CO_LTE_IMM  0x25
@@ -83,9 +83,10 @@
 #define CO_SET_TEMP         0x70
 #define CO_8x               0x80
 #define CO_POP_AND_BRANCH   0xa0
-#define CO_Cx  0xc0
+#define CO_Cx				0xc0
 #define CO_POP_AND_BRANCH2  0xd0
 #define CO_GOTO             0xe0
+#define CO_Fx               0xf0
 
 
 
@@ -99,7 +100,7 @@ typedef struct
 } chans_opcode_t;
 
 
-extern chans_opcode_t chans_opcode_list[]; 
+extern chans_opcode_t chans_opcode_list[];
 
 chans_opcode_t *chans_get_opcode(char *location);
 
