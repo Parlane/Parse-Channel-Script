@@ -157,6 +157,9 @@ void parseByteCodeToCode(u8 * data, int length, int offset, int pad){
 				free(funcname);
 				free(args);
 				break;
+      case CO_03:
+        wprintf(L"%*sunknown_op_03 %d;\n", pad,"", be16(*U16P(data+i+1)));
+        break;
 			case CO_PUSH_ACC:
 				pushStack(ACC);
 				freeACC(0,pad);

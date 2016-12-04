@@ -23,6 +23,8 @@
 #define CO_RETURN   0x01
 #define CO_NEW      0x02
 
+#define CO_03       0x03
+
 #define CO_PUSH_ACC 0x04
 #define CO_05 0x05
 

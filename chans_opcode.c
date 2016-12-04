@@ -21,6 +21,7 @@ chans_opcode_t chans_8bit_opcode_list[] =
 	{CO_EOC, 1, ARG_NONE, L"END OF CODE"},
 	{CO_RETURN, 1, ARG_NONE, L"RETURN ACC"},
 	{CO_NEW, 2, ARG_U8, L"NEW [0x%02hhx args]"},
+  {CO_03, 3, ARG_U16, L"OPx03 [0x%02hx args]"},
 	{CO_PUSH_ACC, 1, ARG_NONE, L"PUSH ACC"},
 	{CO_05, 1, ARG_NONE, L"UNKNOWN EFFECT [05]"},
 	{CO_ADD, 1, ARG_NONE, L"ACC = POP + ACC"},
